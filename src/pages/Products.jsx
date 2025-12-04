@@ -1,45 +1,41 @@
 import Card from "../components/Card"
-import Loading from "../components/Loading"
 import { useState, useEffect } from "react"
+import { useDarkmode } from "../stores/darkmodeStore"
+import api from "../utils/axios"
 
 const Products = () => {
-    const [loading, setLoading] = useState(false)
+    const { isDarkmodeActive, toggleDarkmode } = useDarkmode()
     const [searchterm, setSearchterm] = useState("")
     const [products, setProducts] = useState([])
 
     const getProducts = async () => {
         try {
-            setLoading(true)
-            const res = await fetch(searchterm.length >= 3 ? `https://ilkinibadov.com/api/v1/search?searchterm=${searchterm}` : "https://ilkinibadov.com/api/v1/products")
-            if (res.ok) {
-                const data = await res.json()
+            const { data, statusText } = await api.get(searchterm.length >= 3 ? `https://ilkinibadov.com/api/v1/search?searchterm=${searchterm}` : "https://ilkinibadov.com/api/v1/products")
+            console.log(data)
+            if (statusText === "OK") {
                 setProducts(searchterm.length >= 3 ? data.content : data.products)
             }
         } catch (error) {
             console.error(error)
-        } finally {
-            setLoading(false)
         }
     }
 
     useEffect(() => {
-        getProducts() 
+        getProducts()
     }, [searchterm])
 
     return (
-        <>
+        <div className={`${isDarkmodeActive ? "bg-slate-900 text-white" : "bg-white text-black"} transition-all duration-200`}>
             <div className="w-full flex justify-center py-5">
-                <input className="border border-zinc-300 p-3 min-w-[300px]" placeholder="Search for any product.." type="text" value={searchterm} onChange={(e) => {
+                <input className={`border border-zinc-300 p-3 min-w-[300px]`} placeholder="Search for any product.." type="text" value={searchterm} onChange={(e) => {
                     setSearchterm(e.target.value)
                 }} />
+                <button onClick={toggleDarkmode} className="bg-red-600 text-white px-2 hover:cursor-pointer hover:bg-red-700">{isDarkmodeActive ? "Disable" : "Enable"} Darkmode</button>
             </div>
-            {
-                loading ? <Loading /> :
-                    <div className="w-full min-h-screen h-fit grid grid-cols-4 gap-5 p-5">
-                        {products.map(product => <Card key={product._id} product={product} />)}
-                    </div>
-            }
-        </>
+            <div className="w-full min-h-screen h-fit grid grid-cols-4 gap-5 p-5">
+                {products.map(product => <Card key={product._id} product={product} />)}
+            </div>
+        </div>
     )
 }
 
